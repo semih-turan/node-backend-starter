@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
-const schema = mongoose.Schema({
+const schema = new mongoose.Schema({
     role_id: { type: mongoose.SchemaTypes.ObjectId, required: true },
     permission: { type: String, required: true },
-    created_by: { type: mongoose.SchemaTypes.ObjectId }
+    created_by: { type: mongoose.SchemaTypes.ObjectId, required: false } // 'required' durumu ihtiyaca göre ayarlanabilir
 }, {
     versionKey: false,
     timestamps: {
@@ -12,9 +12,7 @@ const schema = mongoose.Schema({
     }
 });
 
-class RolePrivileges extends mongoose.Model {
+class RolePrivilege extends mongoose.Model {}
 
-}
-
-schema.loadClass(RolePrivileges);
-module.exports = mongoose.model("role_privileges", schema);
+schema.loadClass(RolePrivilege);
+module.exports = mongoose.model("RolePrivilege", schema);
