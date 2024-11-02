@@ -27,9 +27,10 @@ app.use((req, res, next)=>{
   next();
 });
 
-app.use('/', require('./routes/index')); // http://localhost:3000
-app.use('/users', require('./routes/users')); // http://localhost:3000/users
-app.use('/auditlogs', require('./routes/auditlogs')); // http://localhost:3000/auditlogs
+app.use('/api', require('./routes/index')); // http://localhost:3000
+// app.use('/users', require('./routes/users')); // http://localhost:3000/users
+// app.use('/auditlogs', require('./routes/auditlogs')); // http://localhost:3000/auditlogs
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
