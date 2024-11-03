@@ -15,4 +15,4 @@ const schema = new mongoose.Schema({
 class RolePrivilege extends mongoose.Model {}
 
 schema.loadClass(RolePrivilege);
-module.exports = mongoose.model("RolePrivilege", schema);
+module.exports = mongoose.model("role_privileges", schema);

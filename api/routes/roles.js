@@ -32,7 +32,7 @@ router.post("/add", async (req, res) => {
 
     if (
       !body.permissions ||
-      Array.isArray(body.permissions) ||
+      !Array.isArray(body.permissions) ||
       body.permissions.length === 0
     ) {
       throw new CustomError(
@@ -73,6 +73,7 @@ router.post("/add", async (req, res) => {
 router.post("/update", async (req, res) => {
   let body = req.body;
   try {
+
     if (!body._id)
       throw new CustomError(
         Enum.HTTP_CODES.BAD_REQUEST,
@@ -92,13 +93,12 @@ router.post("/update", async (req, res) => {
       body.permissions.length > 0
     ) {
 
-        let rolePrivs = await RolesPrivileges.find({role_id: BeforeUnloadEvent._id});
+        let permissions = await RolePrivileges.find({role_id: body._id});
 
         // body.permissions = ['user_view', 'user_add', 'user_update', 'user_delete'];
         // permissions = [{role_id: 'abc', permission: 'user_add', _id: "bvd"}];
         let removedPermissions = permissions.filter(x => !body.permissions.includes(x.permission));
-
-        let newPermissions = body.permissions.filter(x => !permissions.map(p => p.permission ).includes(x));
+        let newPermissions = body.permissions.filter(x => !permissions.map(p => p.permission).includes(x));
 
         if(removedPermissions.length > 0) {
             await RolePrivileges.deleteMany({_id: {$in: removedPermissions.map(x => x._id)}});
@@ -115,14 +115,6 @@ router.post("/update", async (req, res) => {
                 await priv.save();
               }
         }
-
-      for (let i = 0; i < body.permissions.length; i++) {
-        let priv = new RolePrivileges({
-          role_id: role._id,
-          permission: body.permissions[i],
-          created_by: req.user?.id,
-        });
-      }
     }
 
     await Roles.updateOne({ _id: body._id }, updates);

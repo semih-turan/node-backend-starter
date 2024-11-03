@@ -14,9 +14,10 @@ module.exports = {
         },
         {
             id: "AUDITLOGS",
-            name: "AuditLog Permissions"
-        },
+            name: "AuditLogs Permissions"
+        }
     ],
+
     privileges: [
         {
             key: "user_view",
@@ -24,7 +25,7 @@ module.exports = {
             group: "USERS",
             description: "User view"
         },
-         {
+        {
             key: "user_add",
             name: "User Add",
             group: "USERS",
@@ -48,7 +49,7 @@ module.exports = {
             group: "ROLES",
             description: "Role view"
         },
-         {
+        {
             key: "role_add",
             name: "Role Add",
             group: "ROLES",
@@ -72,7 +73,7 @@ module.exports = {
             group: "CATEGORIES",
             description: "Category view"
         },
-         {
+        {
             key: "category_add",
             name: "Category Add",
             group: "CATEGORIES",
@@ -91,28 +92,16 @@ module.exports = {
             description: "Category delete"
         },
         {
+            key: "category_export",
+            name: "Category Export",
+            group: "CATEGORIES",
+            description: "Category Export"
+        },
+        {
             key: "auditlogs_view",
             name: "AuditLogs View",
             group: "AUDITLOGS",
-            description: "AuditLogs view"
-        },
-         {
-            key: "auditlogs_add",
-            name: "AuditLogs Add",
-            group: "USERS",
-            description: "AuditLog add"
-        },
-        {
-            key: "auditlogs_update",
-            name: "AuditLogs Update",
-            group: "AUDITLOGS",
-            description: "AuditLog update"
-        },
-        {
-            key: "auditlogs_delete",
-            name: "AuditLogs Delete",
-            group: "AUDITLOGS",
-            description: "AuditLog delete"
+            description: "AuditLogs View"
         }
     ]
-};
+}
