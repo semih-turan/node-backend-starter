@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const bcrypt = require("bcrypt");
 const is = require("is_js");
+const jwt = require("jwt-simple");
 
 const Users = require("../db/models/Users");
 const Response = require("../lib/Response");
@@ -9,9 +10,108 @@ const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
 const UserRoles = require("../db/models/UserRoles");
 const Roles = require("../db/models/Roles");
+const config = require('../config');
+const auth = require("../lib/auth")();
+
+// Bir flag yada environments ile bu reister kullanildiktan sonra tekrar tekrar db ye istek atmasini engellemen lazim!
+router.post("/register", async (req, res) => {
+  let body = req.body;
+  try {
+    let user = await Users.findOne({});
+
+    if (user) {
+      return res.sendStatus(Enum.HTTP_CODES.NOT_FOUND);
+    }
+
+    if (!body.email)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        "Bad Request!",
+        "Email is required"
+      );
+
+    if (is.not.email(body.email))
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        "Bad Request!",
+        "Invalid email"
+      );
+
+    if (!body.password)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        "Bad Request!",
+        "Password is required"
+      );
+
+    if (body.password.length < Enum.PASS_LENGTH)
+      throw new CustomError(
+        Enum.HTTP_CODES.BAD_REQUEST,
+        "Bad Request!",
+        "Password must be at least 8 characters long"
+      );
+
+    let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10), null);
+
+    let createdUser = await Users.create({
+      email: body.email,
+      password,
+      is_active: true,
+      first_name: body.first_name,
+      last_name: body.last_name,
+      phone_number: body.phone_number,
+    });
+
+    let role = await Roles.create({
+      role_name: Enum.SUPER_ADMIN,
+      is_active: true,
+      created_by: createdUser._id,
+    });
+
+    await UserRoles.create({
+      role_id: role._id,
+      user_id: createdUser._id,
+    });
+
+    res
+      .status(Enum.HTTP_CODES.CREATED)
+      .json(Response.successResponse({ success: true }));
+  } catch (err) {
+    let errorResponse = Response.errorResponse(err);
+    res.status(errorResponse.code).json(errorResponse);
+  }
+});
+
+router.post("/auth", async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    Users.validateFieldsBeforeAuth(email, password);
+    let user = await Users.findOne({ email });
+    if (!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, "Validation Error", "Email or password wrong");
+    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, "Validation Error", "Email or password wrong");
+    let payload = {
+      id: user._id,
+      exp: parseInt(Date.now() / 1000) * config.JWT.EXPIRE_TIME
+    }
+    let token = jwt.encode(payload, config.JWT.SECRET);
+    let userData = {
+      _id: user._id,
+      first_name: user.first_name,
+      last_name: user.last_name
+    }
+    res.json(Response.successResponse({ token, user: userData }));
+  } catch (err) {
+    let errorResponse = Response.errorResponse(err);
+    res.status(errorResponse.code).json(errorResponse);
+  }
+});
+
+router.all("*", auth.authenticate(), (req, res, next) => {
+  next();
+});
 
 /* GET users listing. */
-router.get("/", async (req, res) => {
+router.get("/", auth.checkRoles("user_view"), async (req, res) => {
   try {
     let users = await Users.find({});
     res.json(Response.successResponse(users));
@@ -21,7 +121,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/add", async (req, res) => {
+router.post("/add", auth.checkRoles("user_add"), async (req, res) => {
   let body = req.body;
   try {
     if (!body.email)
@@ -96,7 +196,7 @@ router.post("/add", async (req, res) => {
   }
 });
 
-router.post("/update", async (req, res) => {
+router.post("/update", auth.checkRoles("user_update"), async (req, res) => {
   let body = req.body;
   try {
     if (!body._id)
@@ -158,7 +258,7 @@ router.post("/update", async (req, res) => {
   }
 });
 
-router.post("/delete", async (req, res) => {
+router.post("/delete", auth.checkRoles("user_delete"), async (req, res) => {
   let body = req.body;
   try {
     if (!body._id)
@@ -173,75 +273,6 @@ router.post("/delete", async (req, res) => {
     await UserRoles.deleteMany({ user_id: body._id });
 
     res.json(Response.successResponse({ success: true }));
-  } catch (err) {
-    let errorResponse = Response.errorResponse(err);
-    res.status(errorResponse.code).json(errorResponse);
-  }
-});
-
-// Bir flag yada environments ile bu reister kullanildiktan sonra tekrar tekrar db ye istek atmasini engellemen lazim!
-router.post("/register", async (req, res) => {
-  let body = req.body;
-  try {
-    let user = await Users.findOne({});
-
-    if (user) {
-      return res.sendStatus(Enum.HTTP_CODES.NOT_FOUND);
-    }
-
-    if (!body.email)
-      throw new CustomError(
-        Enum.HTTP_CODES.BAD_REQUEST,
-        "Bad Request!",
-        "Email is required"
-      );
-
-    if (is.not.email(body.email))
-      throw new CustomError(
-        Enum.HTTP_CODES.BAD_REQUEST,
-        "Bad Request!",
-        "Invalid email"
-      );
-
-    if (!body.password)
-      throw new CustomError(
-        Enum.HTTP_CODES.BAD_REQUEST,
-        "Bad Request!",
-        "Password is required"
-      );
-
-    if (body.password.length < Enum.PASS_LENGTH)
-      throw new CustomError(
-        Enum.HTTP_CODES.BAD_REQUEST,
-        "Bad Request!",
-        "Password must be at least 8 characters long"
-      );
-
-    let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(10), null);
-
-    let createdUser = await Users.create({
-      email: body.email,
-      password,
-      is_active: true,
-      first_name: body.first_name,
-      last_name: body.last_name,
-      phone_number: body.phone_number,
-    });
-
-    let role = await Roles.create({
-      role_name: Enum.SUPER_ADMIN,
-      is_active: true,
-      created_by: createdUser._id,
-    });
-
-    await UserRoles.create({
-      role_id: role._id,
-      user_id: createdUser._id,
-    });
-
-    res
-      .status(Enum.HTTP_CODES.CREATED)
-      .json(Response.successResponse({ success: true }));
   } catch (err) {
     let errorResponse = Response.errorResponse(err);
     res.status(errorResponse.code).json(errorResponse);

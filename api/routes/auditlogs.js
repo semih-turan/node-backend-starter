@@ -3,9 +3,14 @@ const router = express.Router();
 const Response = require("../lib/Response");
 const AuditLogs = require("../db/models/AuditLogs");
 const moment = require("moment");
+const auth = require("../lib/auth")();
+
+router.all("*", auth.authenticate(), (req, res, next) => {
+  next();
+});
 
 // GET users listing.  Replace with your own logic to fetch and return user data.
-router.post("/", async (req, res, nex) => {
+router.post("/", auth.checkRoles("auditlogs_view"), async (req, res, nex) => {
   try {
     let body = req.body;
     let query = {};
