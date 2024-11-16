@@ -8,14 +8,15 @@ const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
 const role_privileges = require("../config/role_privileges");
 
+/* GET list roles */
 router.get("/", async (req, res) => {
-  try {
-    let roles = await Roles.find();
 
+  try {
+    let roles = await Roles.find({});
     res.json(Response.successResponse(roles));
   } catch (error) {
     let errorResponse = Response.errorResponse(err);
-    res.status(errorResponse.status).json(errorResponse);
+    res.status(errorResponse.code).json(errorResponse);
   }
 });
 
@@ -95,8 +96,8 @@ router.post("/update", async (req, res) => {
 
         let permissions = await RolePrivileges.find({role_id: body._id});
 
-        // body.permissions = ['user_view', 'user_add', 'user_update', 'user_delete'];
-        // permissions = [{role_id: 'abc', permission: 'user_add', _id: "bvd"}];
+        // body.permissions => ['user_view', 'user_add', 'user_update', 'user_delete'];
+        // permissions => [{role_id: 'abc', permission: 'user_add', _id: "bvd"}];
         let removedPermissions = permissions.filter(x => !body.permissions.includes(x.permission));
         let newPermissions = body.permissions.filter(x => !permissions.map(p => p.permission).includes(x));
 

@@ -4,6 +4,8 @@ const Categories = require("../db/models/Categories");
 const Response = require("../lib/Response");
 const CustomError = require("../lib/Error");
 const Enum = require("../config/Enum");
+const AuditLogs = require("../lib/AuditLogs");
+const logger = require("../lib/logger/LoggerClass");
 
 /* GET users listing. */
 router.get("/", async (req, res, next) => {
@@ -11,7 +13,7 @@ router.get("/", async (req, res, next) => {
     let categories = await Categories.find({});
 
     res.json(Response.successResponse(categories));
-  } catch (err) {
+  } catch (err) { 
     let errorRespone = Response.errorResponse(err);
     res.status(errorRespone.code).json(Response.errorResponse(err));
   }
@@ -30,16 +32,20 @@ router.post("/add", async (req, res) => {
 
     let category = new Categories({
       name: body.name,
-      is_active: true,
-      created_by: req.user?.id,
+      is_active: true, // body.is_active seklinde de alabilirsin
+      created_by: req.user?.id,  // req.user varsa, user = req.user.id; yoksa, user = undefined
     });
 
-    await category.save();
+    await category.save(); // DB'ye category'yi kayit et.
+
+    AuditLogs.info(req.user?.email, "Categories", "Add", category);
+    logger.info(req.user?.email, "Categories", "Add", category);
 
     res.json(
       Response.successResponse({ success: true }, Enum.HTTP_CODES.CREATED)
     );
   } catch (err) {
+    logger.error(req.user?.email, "Categories", "Add", err);
     let errorRespone = Response.errorResponse(err);
     res.status(errorRespone.code).json(errorRespone);
   }
@@ -59,6 +65,8 @@ router.post("/update", async (req, res) => {
     
         await Categories.updateOne({_id: body._id}, updates);
 
+        AuditLogs.info(req.user?.email, "Categories", "Update", { _id: body._id, ...updates });
+
         res.json(Response.successResponse({success: true}));
 
     } catch (err) {
@@ -77,6 +85,8 @@ router.post("/delete", async (req, res) => {
 
         await Categories.deleteOne({_id: body._id});
 
+        AuditLogs.info(req.user?.email, "Categories", "Delete", { _id: body._id });
+  
         res.json(Response.successResponse({success: true}));
 
     } catch (err) {

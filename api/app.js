@@ -1,5 +1,5 @@
-if(process.env.NODE_ENV !== 'production')
-require('dotenv').config()
+if(process.env.NODE_ENV !== 'production') // NODE_ENV default olarak development degeri alir. Express.js kendi log seviyesinin debug mi yoksa info olmasi gerektigine karar verir. Son kullaniciya hata sayfasinin staging 'i engelliyor.
+  require('dotenv').config()
 
 var createError = require('http-errors');
 var express = require('express');
@@ -9,8 +9,6 @@ var logger = require('morgan');
 
 
 var app = express();
-
-console.log("ENV: ", process.env);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -22,14 +20,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next)=>{
-  console.log("Middleware 1");
-  next();
-});
-
 app.use('/api', require('./routes/index')); // http://localhost:3000
-// app.use('/users', require('./routes/users')); // http://localhost:3000/users
-// app.use('/auditlogs', require('./routes/auditlogs')); // http://localhost:3000/auditlogs
+app.use('/users', require('./routes/users')); // http://localhost:3000/users
+app.use('/auditlogs', require('./routes/auditlogs')); // http://localhost:3000/auditlogs
 
 
 // catch 404 and forward to error handler

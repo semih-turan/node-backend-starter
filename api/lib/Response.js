@@ -3,6 +3,7 @@ const CustomError = require('./Error');
 
 class Response {
   constructor() {}
+
   static successResponse(data, code = 200) {
     return {
       code,
@@ -20,8 +21,8 @@ class Response {
           description: error.description,
         },
       };
-    } else if(error.message.includes("E11000")) {
-      return{
+    } else if (error?.message?.includes("E11000")) {  // Güvenli kontrol
+      return {
         code: Enum.HTTP_CODES.CONFLICT,
         error: {
           message: 'Conflict',
@@ -34,7 +35,7 @@ class Response {
       code: Enum.HTTP_CODES.INT_SERVER_ERROR,
       error: {
         message: 'Internal Server Error',
-        description: error.message,
+        description: error?.message || 'Unknown error',
       },
     };
   }

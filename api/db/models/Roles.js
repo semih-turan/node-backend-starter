@@ -6,12 +6,12 @@ const schema = new mongoose.Schema(
     role_name: { type: mongoose.SchemaTypes.String, required: true, unique: true },
     is_active: { type: Boolean, default: true },
     created_by: {
-      // Yazım hatası düzeltildi
       type: mongoose.Schema.Types.ObjectId,
+      required: false, // 'required' durumu ihtiyaca göre ayarlanabilir
     },
   },
   {
-    versionKey: false,
+    versionKey: false, // version key alanini kapatir.
     timestamps: {
       createdAt: "created_at",
       updatedAt: "updated_at",

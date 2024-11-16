@@ -13,7 +13,7 @@ const {CONNECTION_STRING, PORT} = require('../config');
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(PORT);
 app.set('port', port);
 
 /**
@@ -89,5 +89,5 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 
-  new Database().connect({CONNECTION_STRING});
+  new Database().connect({CONNECTION_STRING}); // DB yi bağlar.
 }
